@@ -19,7 +19,8 @@ export default {
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
-      }
+      },
+      "package": "com.seralpberke.podcastfast"
     },
     web: {
       bundler: "metro",
@@ -38,7 +39,12 @@ export default {
         }
       ],
       "@react-native-firebase/app",
-      "@react-native-firebase/auth",
+      ["@react-native-firebase/auth",
+        {
+          "skipClientIdValidation": true,
+          "disableUrlSchemes": true
+        }
+      ],
       [
         "expo-build-properties",
         {

@@ -11,7 +11,7 @@ GoogleSignin.configure({
   webClientId: '', // Add your web client ID here
 });
 
-type Step = 'welcome' | 'email' | 'password' | 'birthdate' | 'gender' | 'interests';
+type Step = 'welcome' | 'email' | 'password' | 'birthdate' | 'gender';
 
 export default function Onboarding() {
   const { signUp } = useAuth();
@@ -22,7 +22,6 @@ export default function Onboarding() {
   const [birthdate, setBirthdate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState<string>('');
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
   const handleEmailSignUp = async () => {
     try {
@@ -34,7 +33,7 @@ export default function Onboarding() {
         displayName: email.split('@')[0], // Using email prefix as display name
       });
 
-      // Store additional user data (birthdate, gender, interests) in your database
+      // Store additional user data (birthdate, gender) in your database
       // You can implement this part based on your database structure
 
       router.push('/(tabs)');
@@ -79,9 +78,6 @@ export default function Onboarding() {
         setCurrentStep('gender');
         break;
       case 'gender':
-        setCurrentStep('interests');
-        break;
-      case 'interests':
         handleEmailSignUp();
         break;
     }
@@ -101,17 +97,6 @@ export default function Onboarding() {
       case 'gender':
         setCurrentStep('birthdate');
         break;
-      case 'interests':
-        setCurrentStep('gender');
-        break;
-    }
-  };
-
-  const toggleInterest = (interest: string) => {
-    if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter(i => i !== interest));
-    } else {
-      setSelectedInterests([...selectedInterests, interest]);
     }
   };
 
@@ -280,51 +265,6 @@ export default function Onboarding() {
     </View>
   );
 
-  const renderInterestsScreen = () => {
-    const podcastCategories = [
-      { name: 'Comedy', icon: '🎭' },
-      { name: 'True Crime', icon: '🔍' },
-      { name: 'News', icon: '📰' },
-      { name: 'Sports', icon: '⚽' },
-      { name: 'Business', icon: '💼' },
-      { name: 'Education', icon: '📚' },
-    ];
-
-    return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>Choose your interests</Text>
-        <Text style={styles.subtitle}>Pick at least 3 topics you like.</Text>
-        <View style={styles.interestsGrid}>
-          {podcastCategories.map((category) => (
-            <TouchableOpacity
-              key={category.name}
-              style={[
-                styles.interestItem,
-                selectedInterests.includes(category.name) && styles.interestItemSelected
-              ]}
-              onPress={() => toggleInterest(category.name)}
-            >
-              <Text style={styles.interestIcon}>{category.icon}</Text>
-              <Text style={styles.interestText}>{category.name}</Text>
-              {selectedInterests.includes(category.name) && (
-                <View style={styles.checkmark}>
-                  <Ionicons name="checkmark" size={16} color="#fff" />
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity 
-          style={[styles.nextButton, selectedInterests.length < 3 && styles.nextButtonDisabled]}
-          onPress={handleNext}
-          disabled={selectedInterests.length < 3}
-        >
-          <Text style={styles.nextButtonText}>Done</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'welcome':
@@ -337,8 +277,8 @@ export default function Onboarding() {
         return renderBirthdateScreen();
       case 'gender':
         return renderGenderScreen();
-      case 'interests':
-        return renderInterestsScreen();
+      default:
+        return null;
     }
   };
 
@@ -498,40 +438,6 @@ const styles = StyleSheet.create({
   },
   genderOptionTextSelected: {
     fontWeight: '600',
-  },
-  interestsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginVertical: 24,
-  },
-  interestItem: {
-    width: '48%',
-    backgroundColor: '#1E293B',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  interestItemSelected: {
-    backgroundColor: '#3B82F6',
-  },
-  interestIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  interestText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  checkmark: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: '#22C55E',
-    borderRadius: 12,
-    padding: 4,
   },
   loginContainer: {
     flexDirection: 'row',
