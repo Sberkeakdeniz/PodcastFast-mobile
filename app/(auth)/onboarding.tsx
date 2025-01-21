@@ -11,7 +11,7 @@ GoogleSignin.configure({
   webClientId: '', // Add your web client ID here
 });
 
-type Step = 'welcome' | 'email' | 'password' | 'birthdate' | 'gender';
+type Step = 'welcome' | 'email' | 'password' | 'experience' | 'podcastType' | 'birthdate' | 'gender';
 
 export default function Onboarding() {
   const { signUp } = useAuth();
@@ -19,6 +19,9 @@ export default function Onboarding() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [experience, setExperience] = useState<string>('');
+  const [podcastType, setPodcastType] = useState<string>('');
+  const [otherPodcastType, setOtherPodcastType] = useState<string>('');
   const [birthdate, setBirthdate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState<string>('');
@@ -72,6 +75,12 @@ export default function Onboarding() {
         setCurrentStep('password');
         break;
       case 'password':
+        setCurrentStep('experience');
+        break;
+      case 'experience':
+        setCurrentStep('podcastType');
+        break;
+      case 'podcastType':
         setCurrentStep('birthdate');
         break;
       case 'birthdate':
@@ -91,8 +100,14 @@ export default function Onboarding() {
       case 'password':
         setCurrentStep('email');
         break;
-      case 'birthdate':
+      case 'experience':
         setCurrentStep('password');
+        break;
+      case 'podcastType':
+        setCurrentStep('experience');
+        break;
+      case 'birthdate':
+        setCurrentStep('podcastType');
         break;
       case 'gender':
         setCurrentStep('birthdate');
@@ -203,6 +218,91 @@ export default function Onboarding() {
     </View>
   );
 
+  const renderExperienceScreen = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>How long have you been creating podcasts?</Text>
+      {[
+        'Just starting out',
+        '6 months to 1 year',
+        '1-3 years',
+        'More than 3 years'
+      ].map((option) => (
+        <TouchableOpacity 
+          key={option}
+          style={[styles.experienceOption, experience === option && styles.experienceOptionSelected]}
+          onPress={() => setExperience(option)}
+        >
+          <Text style={[styles.experienceOptionText, experience === option && styles.experienceOptionTextSelected]}>
+            {option}
+          </Text>
+          {experience === option && (
+            <Ionicons name="checkmark-outline" size={24} color="#fff" />
+          )}
+        </TouchableOpacity>
+      ))}
+      <TouchableOpacity 
+        style={[styles.nextButton, !experience && styles.nextButtonDisabled]}
+        onPress={handleNext}
+        disabled={!experience}
+      >
+        <Text style={styles.nextButtonText}>Next</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderPodcastTypeScreen = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>What type of podcasts do you create?</Text>
+      {[
+        'Science',
+        'News',
+        'Sports',
+        'Technology',
+        'Games',
+        'Other'
+      ].map((option) => (
+        <TouchableOpacity 
+          key={option}
+          style={[styles.podcastTypeOption, podcastType === option && styles.podcastTypeOptionSelected]}
+          onPress={() => {
+            setPodcastType(option);
+            if (option !== 'Other') {
+              setOtherPodcastType('');
+            }
+          }}
+        >
+          <Text style={[styles.podcastTypeOptionText, podcastType === option && styles.podcastTypeOptionTextSelected]}>
+            {option}
+          </Text>
+          {podcastType === option && (
+            <Ionicons name="checkmark-outline" size={24} color="#fff" />
+          )}
+        </TouchableOpacity>
+      ))}
+      
+      {podcastType === 'Other' && (
+        <TextInput
+          style={[styles.input, { marginTop: 12 }]}
+          placeholder="Please specify your podcast type"
+          placeholderTextColor="#666"
+          value={otherPodcastType}
+          onChangeText={setOtherPodcastType}
+        />
+      )}
+
+      <TouchableOpacity 
+        style={[
+          styles.nextButton, 
+          (!podcastType || (podcastType === 'Other' && !otherPodcastType)) && styles.nextButtonDisabled
+        ]}
+        onPress={handleNext}
+        disabled={!podcastType || (podcastType === 'Other' && !otherPodcastType)}
+      >
+        <Text style={styles.nextButtonText}>Next</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderBirthdateScreen = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>What's your date of birth?</Text>
@@ -273,6 +373,10 @@ export default function Onboarding() {
         return renderEmailScreen();
       case 'password':
         return renderPasswordScreen();
+      case 'experience':
+        return renderExperienceScreen();
+      case 'podcastType':
+        return renderPodcastTypeScreen();
       case 'birthdate':
         return renderBirthdateScreen();
       case 'gender':
@@ -452,5 +556,43 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
     fontSize: 14,
     fontWeight: '500',
+  },
+  experienceOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1E293B',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  experienceOptionSelected: {
+    backgroundColor: '#3B82F6',
+  },
+  experienceOptionText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  experienceOptionTextSelected: {
+    fontWeight: '600',
+  },
+  podcastTypeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1E293B',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  podcastTypeOptionSelected: {
+    backgroundColor: '#3B82F6',
+  },
+  podcastTypeOptionText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  podcastTypeOptionTextSelected: {
+    fontWeight: '600',
   },
 }); 
