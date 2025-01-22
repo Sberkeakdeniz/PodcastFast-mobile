@@ -5,10 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useAuth } from '../../src/contexts/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 // Initialize Google Sign-In
 GoogleSignin.configure({
-  webClientId: '', // Add your web client ID here
+  webClientId: '702703998338-nc8vdv8kk8b14hf1lsit846kg6lo2guh.apps.googleusercontent.com', // Add your web client ID here
 });
 
 type Step = 'welcome' | 'email' | 'password' | 'experience' | 'podcastType' | 'birthdate' | 'gender';
@@ -31,13 +33,22 @@ export default function Onboarding() {
       const userCredential = await signUp(email, password);
       const user = userCredential.user;
       
-      // Update user profile with additional information
+      // Update user profile with display name
       await user.updateProfile({
-        displayName: email.split('@')[0], // Using email prefix as display name
+        displayName: email.split('@')[0],
       });
 
-      // Store additional user data (birthdate, gender) in your database
-      // You can implement this part based on your database structure
+      // Create user document in Firestore
+      await firestore().collection('users').doc(user.uid).set({
+        email: email,
+        displayName: email.split('@')[0],
+        experience: experience,
+        podcastType: podcastType === 'Other' ? otherPodcastType : podcastType,
+        birthdate: firestore.Timestamp.fromDate(birthdate),
+        gender: gender,
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
 
       router.push('/(tabs)');
     } catch (error: any) {
@@ -52,13 +63,56 @@ export default function Onboarding() {
   };
 
   const handleGoogleSignIn = async () => {
-    // Implement Google Sign-In
-    Alert.alert('Coming Soon', 'Google sign in will be available soon.');
-  };
+    try {
+      // Check if your device supports Google Play
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      // Get the users ID token
+      const signInResult = await GoogleSignin.signIn();
+      const idToken = await (await GoogleSignin.getTokens()).idToken;
+      if (!idToken) {
+        throw new Error('No ID token found');
+      }
 
-  const handleFacebookSignIn = async () => {
-    // Implement Facebook sign in
-    Alert.alert('Coming Soon', 'Facebook sign in will be available soon.');
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+      // Sign-in the user with the credential
+      const userCredential = await auth().signInWithCredential(googleCredential);
+      const user = userCredential.user;
+
+      // Check if this is a new user
+      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      
+      if (!userDoc.exists) {
+        // If new user, set initial data
+        await firestore().collection('users').doc(user.uid).set({
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+          // Set default values for required fields
+          experience: '',
+          podcastType: '',
+          birthdate: null,
+          gender: '',
+        });
+
+        // For new users, continue with onboarding
+        setEmail(user.email || '');
+        setCurrentStep('experience');
+      } else {
+        // Existing user, go directly to main app
+        router.push('/(tabs)');
+      }
+    } catch (error: any) {
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        Alert.alert('Error', 'An account already exists with the same email address.');
+      } else {
+        console.error(error);
+        Alert.alert('Error', 'Something went wrong with Google Sign-In. Please try again.');
+      }
+    }
   };
 
   const handleAppleSignIn = async () => {
@@ -132,14 +186,6 @@ export default function Onboarding() {
           >
             <Ionicons name="logo-google" size={20} color="#fff" />
             <Text style={styles.socialButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.socialButton}
-            onPress={handleFacebookSignIn}
-          >
-            <Ionicons name="logo-facebook" size={20} color="#fff" />
-            <Text style={styles.socialButtonText}>Continue with Facebook</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 

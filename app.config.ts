@@ -13,19 +13,12 @@ export default {
     ios: {
       supportsTablet: true,
       googleServicesFile: "./GoogleService-Info.plist",
-      bundleIdentifier: "com.seralpberke.podcastfast"
-    },
-    android: {
-      adaptiveIcon: {
-        foregroundImage: "./assets/images/adaptive-icon.png",
-        backgroundColor: "#ffffff"
-      },
-      "package": "com.seralpberke.podcastfast"
-    },
-    web: {
-      bundler: "metro",
-      output: "static",
-      favicon: "./assets/images/favicon.png"
+      bundleIdentifier: "com.seralpberke.podcastfast",
+      config: {
+        googleSignIn: {
+          reservedClientId: "com.googleusercontent.apps.702703998338-nc8vdv8kk8b14hf1lsit846kg6lo2guh"
+        }
+      }
     },
     plugins: [
       "expo-router",

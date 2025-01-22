@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../src/contexts/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -8,9 +8,25 @@ export default function Profile() {
   const { signOut, user } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut();
-    // Redirect to onboarding after sign out
-    router.replace('/(auth)/onboarding');
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await signOut();
+            router.replace('/(auth)/onboarding');
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
