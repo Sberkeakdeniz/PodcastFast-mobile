@@ -13,6 +13,7 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		4FCF6624877B48A1B38938F5 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404D9A830E574AF482FA7A5B /* noop-file.swift */; };
+		80D865CF2D458A4E00ACA161 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80D865CE2D458A4E00ACA161 /* StoreKit.framework */; };
 		B152674054CA5087EF8D666F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 896EE181121FD04125C98DBD /* PrivacyInfo.xcprivacy */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		B9B47E41B958DEF2676D5C69 /* Pods_podcastfastmobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7FB94067EF8C922287FF71C /* Pods_podcastfastmobile.framework */; };
@@ -30,6 +31,7 @@
 		462AC8FC2C0348A1A4BCF682 /* podcastfastmobile-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "podcastfastmobile-Bridging-Header.h"; path = "podcastfastmobile/podcastfastmobile-Bridging-Header.h"; sourceTree = "<group>"; };
 		6C2E3173556A471DD304B334 /* Pods-podcastfastmobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-podcastfastmobile.debug.xcconfig"; path = "Target Support Files/Pods-podcastfastmobile/Pods-podcastfastmobile.debug.xcconfig"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-podcastfastmobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-podcastfastmobile.release.xcconfig"; path = "Target Support Files/Pods-podcastfastmobile/Pods-podcastfastmobile.release.xcconfig"; sourceTree = "<group>"; };
+		80D865CE2D458A4E00ACA161 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		896EE181121FD04125C98DBD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = podcastfastmobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = podcastfastmobile/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
@@ -45,6 +47,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9B47E41B958DEF2676D5C69 /* Pods_podcastfastmobile.framework in Frameworks */,
+				80D865CF2D458A4E00ACA161 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,6 +75,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				80D865CE2D458A4E00ACA161 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				C7FB94067EF8C922287FF71C /* Pods_podcastfastmobile.framework */,
 			);
@@ -414,6 +418,8 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = podcastfastmobile/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PodcastFast;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -448,6 +454,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5XT2NZRUQ3;
 				INFOPLIST_FILE = podcastfastmobile/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PodcastFast;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -535,10 +543,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -604,10 +609,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
