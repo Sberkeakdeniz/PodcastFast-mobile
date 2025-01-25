@@ -1,11 +1,24 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, ActivityIndicator, View } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
+import { SubscriptionProvider } from '../../src/contexts/subscription';
+import { useSubscription } from '../../src/contexts/subscription';
 
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 
-export default function TabLayout() {
+function TabNavigator() {
+  const { subscriptionState } = useSubscription();
+
+  if (subscriptionState.isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1E293B' }}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -40,7 +53,8 @@ export default function TabLayout() {
             />
           ) : null
         ),
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
@@ -78,5 +92,13 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <SubscriptionProvider>
+      <TabNavigator />
+    </SubscriptionProvider>
   );
 }

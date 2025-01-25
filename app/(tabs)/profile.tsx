@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../src/contexts/auth';
+import { useSubscription } from '../../src/contexts/subscription';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 export default function Profile() {
   const { signOut, user } = useAuth();
+  const { subscriptionState } = useSubscription();
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -29,6 +31,14 @@ export default function Profile() {
     );
   };
 
+  const getSubscriptionText = () => {
+    if (subscriptionState.isLoading) return 'Loading...';
+    if (subscriptionState.status === 'pro') {
+      return `Pro Plan${subscriptionState.plan ? ` - ${subscriptionState.plan}` : ''}`;
+    }
+    return 'Free Plan';
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -38,6 +48,14 @@ export default function Profile() {
           </View>
           <Text style={styles.name}>{user?.displayName || 'User'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
+        </View>
+
+        <View style={styles.subscriptionCard}>
+          <View style={styles.subscriptionHeader}>
+            <Ionicons name="star" size={24} color="#7C3AED" />
+            <Text style={styles.subscriptionTitle}>Subscription Status</Text>
+          </View>
+          <Text style={styles.subscriptionInfo}>{getSubscriptionText()}</Text>
         </View>
 
         <View style={styles.section}>
@@ -94,6 +112,30 @@ const styles = StyleSheet.create({
   },
   email: {
     fontSize: 16,
+    color: '#94A3B8',
+    marginBottom: 8,
+  },
+  subscriptionCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#2D3748',
+  },
+  subscriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  subscriptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  subscriptionInfo: {
+    fontSize: 14,
     color: '#94A3B8',
   },
   section: {

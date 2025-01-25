@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import openAIService, { type PodcastContent } from '../../src/services/openai';
+import Purchases from 'react-native-purchases';
+import Superwall from '@superwall/react-native-superwall';
+import { router } from 'expo-router';
 
 type Platform = {
   name: string;
@@ -15,6 +18,28 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<PodcastContent | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<string>('Loading...');
+
+  useEffect(() => {
+    fetchSubscriptionInfo();
+  }, []);
+  const fetchSubscriptionInfo = async () => {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const hasActiveSubscription = customerInfo.activeSubscriptions.length > 0 || 
+                                  Object.keys(customerInfo.entitlements.active).length > 0;
+      
+      if (hasActiveSubscription) {
+        const activeEntitlements = Object.keys(customerInfo.entitlements.active);
+        setSubscriptionInfo(`Pro Plan${activeEntitlements.length > 0 ? ` - ${activeEntitlements[0]}` : ''}`);
+      } else {
+        setSubscriptionInfo('Free Plan');
+      }
+    } catch (error) {
+      console.error('Error fetching subscription info:', error);
+      setSubscriptionInfo('Failed to load subscription info');
+    }
+  };
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -22,7 +47,8 @@ export default function Index() {
 
   const handleGenerate = async () => {
     if (!searchQuery.trim()) return;
-
+    fetchSubscriptionInfo();
+    if(subscriptionInfo === 'Pro Plan') {
     setIsLoading(true);
     try {
       const content = await openAIService.generateContent(searchQuery);
@@ -33,8 +59,13 @@ export default function Index() {
       // You might want to show an error message to the user here
     } finally {
       setIsLoading(false);
-    }
-  };
+    } 
+  } else {
+    Superwall.shared.register("onboarding_complete").then(() => {
+      router.push('/(tabs)');
+    });
+  }
+}
 
   const renderExpandableSection = (
     title: string, 

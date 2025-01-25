@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -7,7 +7,8 @@ import { useAuth } from '../../src/contexts/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-
+import Superwall from "@superwall/react-native-superwall";
+import Purchases from 'react-native-purchases';
 // Initialize Google Sign-In
 GoogleSignin.configure({
   webClientId: '702703998338-nc8vdv8kk8b14hf1lsit846kg6lo2guh.apps.googleusercontent.com', // Add your web client ID here
@@ -27,9 +28,11 @@ export default function Onboarding() {
   const [birthdate, setBirthdate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleEmailSignUp = async () => {
     try {
+      setIsLoading(true);
       const userCredential = await signUp(email, password);
       const user = userCredential.user;
       
@@ -50,7 +53,19 @@ export default function Onboarding() {
         updatedAt: firestore.FieldValue.serverTimestamp(),
       });
 
-      router.push('/(tabs)');
+      // Check subscription status before showing paywall
+      const customerInfo = await Purchases.getCustomerInfo();
+      const hasActiveSubscription = customerInfo.activeSubscriptions.length > 0 || 
+                                  Object.keys(customerInfo.entitlements.active).length > 0;
+      
+      if (hasActiveSubscription) {
+        // If user has active subscription, go directly to main app
+        router.push('/(tabs)');
+      } else {
+        // If no active subscription, show paywall
+        await Superwall.shared.register("onboarding_complete");
+        router.push('/(tabs)');
+      }
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         Alert.alert('Error', 'That email address is already in use!');
@@ -59,11 +74,14 @@ export default function Onboarding() {
       } else {
         Alert.alert('Error', error.message);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
     try {
+      setIsLoading(true);
       // Check if your device supports Google Play
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       // Get the users ID token
@@ -102,8 +120,19 @@ export default function Onboarding() {
         setEmail(user.email || '');
         setCurrentStep('experience');
       } else {
-        // Existing user, go directly to main app
-        router.push('/(tabs)');
+        // Existing user, check subscription before showing paywall
+        const customerInfo = await Purchases.getCustomerInfo();
+        const hasActiveSubscription = customerInfo.activeSubscriptions.length > 0 || 
+                                    Object.keys(customerInfo.entitlements.active).length > 0;
+        
+        if (hasActiveSubscription) {
+          // If user has active subscription, go directly to main app
+          router.push('/(tabs)');
+        } else {
+          // If no active subscription, show paywall
+          await Superwall.shared.register("onboarding_complete");
+          router.push('/(tabs)');
+        }
       }
     } catch (error: any) {
       if (error.code === 'auth/account-exists-with-different-credential') {
@@ -112,6 +141,8 @@ export default function Onboarding() {
         console.error(error);
         Alert.alert('Error', 'Something went wrong with Google Sign-In. Please try again.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -431,6 +462,14 @@ export default function Onboarding() {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1E293B' }}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
