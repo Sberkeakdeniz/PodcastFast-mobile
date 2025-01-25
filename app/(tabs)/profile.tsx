@@ -4,6 +4,7 @@ import { useAuth } from '../../src/contexts/auth';
 import { useSubscription } from '../../src/contexts/subscription';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import auth from '@react-native-firebase/auth';
 
 export default function Profile() {
   const { signOut, user } = useAuth();
@@ -34,9 +35,72 @@ export default function Profile() {
   const getSubscriptionText = () => {
     if (subscriptionState.isLoading) return 'Loading...';
     if (subscriptionState.status === 'pro') {
-      return `Pro Plan${subscriptionState.plan ? ` - ${subscriptionState.plan}` : ''}`;
+      return 'Pro Plan';
     }
     return 'Free Plan';
+  };
+
+  const handleChangePassword = async () => {
+    Alert.prompt(
+      'Change Password',
+      'Enter your current password',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Next',
+          onPress: async (currentPassword) => {
+            if (!currentPassword) {
+              Alert.alert('Error', 'Please enter your current password');
+              return;
+            }
+
+            try {
+              // Reauthenticate user
+              const credential = auth.EmailAuthProvider.credential(
+                auth().currentUser?.email || '',
+                currentPassword
+              );
+              await auth().currentUser?.reauthenticateWithCredential(credential);
+
+              // If reauthentication successful, prompt for new password
+              Alert.prompt(
+                'New Password',
+                'Enter your new password (minimum 10 characters)',
+                [
+                  {
+                    text: 'Cancel',
+                    style: 'cancel'
+                  },
+                  {
+                    text: 'Change Password',
+                    onPress: async (newPassword) => {
+                      if (!newPassword || newPassword.length < 10) {
+                        Alert.alert('Error', 'Password must be at least 10 characters long');
+                        return;
+                      }
+
+                      try {
+                        await auth().currentUser?.updatePassword(newPassword);
+                        Alert.alert('Success', 'Password updated successfully');
+                      } catch (error: any) {
+                        Alert.alert('Error', error.message);
+                      }
+                    }
+                  }
+                ],
+                'secure-text'
+              );
+            } catch (error: any) {
+              Alert.alert('Error', 'Current password is incorrect');
+            }
+          }
+        }
+      ],
+      'secure-text'
+    );
   };
 
   return (
@@ -60,14 +124,17 @@ export default function Profile() {
 
         <View style={styles.section}>
           <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="settings-outline" size={24} color="#fff" />
-            <Text style={styles.menuItemText}>Settings</Text>
+            <Ionicons name="help-circle-outline" size={24} color="#fff" />
+            <Text style={styles.menuItemText}>Help & Support</Text>
             <Ionicons name="chevron-forward" size={24} color="#666" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="help-circle-outline" size={24} color="#fff" />
-            <Text style={styles.menuItemText}>Help & Support</Text>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleChangePassword}
+          >
+            <Ionicons name="key-outline" size={24} color="#fff" />
+            <Text style={styles.menuItemText}>Change Password</Text>
             <Ionicons name="chevron-forward" size={24} color="#666" />
           </TouchableOpacity>
 
@@ -151,6 +218,24 @@ const styles = StyleSheet.create({
     borderBottomColor: '#2D3748',
   },
   menuItemText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#fff',
+    marginLeft: 12,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2D3748',
+  },
+  settingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  settingText: {
     flex: 1,
     fontSize: 16,
     color: '#fff',
