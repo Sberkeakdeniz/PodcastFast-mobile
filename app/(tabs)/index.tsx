@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import openAIService, { type PodcastContent } from '../../src/services/openai';
 import Purchases from 'react-native-purchases';
@@ -11,6 +11,7 @@ type Platform = {
   desc: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
+  url: string;
 };
 
 export default function Index() {
@@ -66,6 +67,19 @@ export default function Index() {
     });
   }
 }
+
+  const handlePlatformPress = async (url: string) => {
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Unable to open platform website');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong while opening the website');
+    }
+  };
 
   const renderExpandableSection = (
     title: string, 
@@ -235,13 +249,47 @@ export default function Index() {
             {/* Platform Items */}
             <View style={styles.platformList}>
               {([
-                { name: 'Spotify for Creators', desc: 'Analytics and distribution', icon: 'musical-notes-outline', color: '#22C55E' },
-                { name: 'Buzzsprout', desc: 'Easy hosting and analytics', icon: 'radio-outline', color: '#F97316' },
-                { name: 'Podbean', desc: 'Monetization and hosting', icon: 'mic-outline', color: '#3B82F6' },
-                { name: 'Supercast', desc: 'Premium subscriptions', icon: 'star-outline', color: '#A78BFA' },
-                { name: 'RedCircle', desc: 'Dynamic ad insertion', icon: 'radio-outline', color: '#EF4444' },
+                { 
+                  name: 'Spotify for Creators', 
+                  desc: 'Analytics and distribution', 
+                  icon: 'musical-notes-outline', 
+                  color: '#1DB954',
+                  url: 'https://podcasters.spotify.com'
+                },
+                { 
+                  name: 'Buzzsprout', 
+                  desc: 'Easy hosting and analytics', 
+                  icon: 'radio-outline', 
+                  color: '#F47B21',
+                  url: 'https://www.buzzsprout.com'
+                },
+                { 
+                  name: 'Podbean', 
+                  desc: 'Monetization and hosting', 
+                  icon: 'mic-outline', 
+                  color: '#86C240',
+                  url: 'https://www.podbean.com'
+                },
+                { 
+                  name: 'Supercast', 
+                  desc: 'Premium subscriptions', 
+                  icon: 'star-outline', 
+                  color: '#A78BFA',
+                  url: 'https://www.supercast.com'
+                },
+                { 
+                  name: 'RedCircle', 
+                  desc: 'Dynamic ad insertion', 
+                  icon: 'radio-outline', 
+                  color: '#EF4444',
+                  url: 'https://redcircle.com'
+                },
               ] as Platform[]).map((platform, index) => (
-                <TouchableOpacity key={index} style={styles.platformItem}>
+                <TouchableOpacity 
+                  key={index}
+                  style={styles.platformItem}
+                  onPress={() => handlePlatformPress(platform.url)}
+                >
                   <View style={[styles.platformIcon, { backgroundColor: platform.color + '20' }]}>
                     <Ionicons name={platform.icon} size={24} color={platform.color} />
                   </View>
@@ -249,7 +297,7 @@ export default function Index() {
                     <Text style={styles.platformName}>{platform.name}</Text>
                     <Text style={styles.platformDesc}>{platform.desc}</Text>
                   </View>
-                  <Ionicons name="chevron-forward-outline" size={20} color="#666" />
+                  <Ionicons name="chevron-forward" size={24} color="#666" />
                 </TouchableOpacity>
               ))}
             </View>

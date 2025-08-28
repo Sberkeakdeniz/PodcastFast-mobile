@@ -361,48 +361,42 @@ export default function Guides() {
     );
   };
 
+  const renderGuideCard = (guide: GuideSection) => (
+    <View key={guide.id} style={styles.guideCard}>
+      <View style={styles.guideHeader}>
+        <View style={[styles.guideIcon, { backgroundColor: `${guide.iconColor}20` }]}>
+          <Ionicons name={guide.icon} size={24} color={guide.iconColor} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.guideTitle}>{guide.title}</Text>
+          <Text style={styles.guideDescription}>{guide.description}</Text>
+        </View>
+      </View>
+      
+      {guide.subsections.map((subsection, index) => (
+        <View key={index} style={{ marginBottom: 12 }}>
+          <Text style={styles.subsectionTitle}>{subsection.title}</Text>
+          <Text style={styles.subsectionDescription}>{subsection.description}</Text>
+        </View>
+      ))}
+
+      <TouchableOpacity 
+        style={styles.readMoreButton}
+        onPress={() => setSelectedGuide(guide.id)}
+      >
+        <Text style={styles.readMoreText}>Read complete guide</Text>
+        <Ionicons name="arrow-forward" size={20} color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Podcast Guides</Text>
         
         <View style={styles.guidesList}>
-          {guides.map((guide) => (
-            <TouchableOpacity key={guide.id} style={styles.guideCard}>
-              <View style={[styles.guideIcon, { backgroundColor: guide.iconColor + '20' }]}>
-                <Ionicons name={guide.icon} size={24} color={guide.iconColor} />
-              </View>
-              
-              <View style={styles.guideContent}>
-                <Text style={styles.guideTitle}>{guide.title}</Text>
-                <Text style={styles.guideDescription}>{guide.description}</Text>
-                
-                <View style={styles.subsectionsList}>
-                  {guide.subsections.map((subsection, index) => (
-                    <View key={index} style={styles.subsection}>
-                      <View style={styles.bullet} />
-                      <View style={styles.subsectionContent}>
-                        <Text style={styles.subsectionTitle}>{subsection.title}</Text>
-                        <Text style={styles.subsectionDescription}>{subsection.description}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.readMoreButton}
-                  onPress={() => setSelectedGuide(guide.id)}
-                >
-                  <Text style={styles.readMoreText}>
-                    {guide.id === '1' ? 'Read complete guide' : 
-                     guide.id === '2' ? 'View full equipment list' : 
-                     'Read complete guide'}
-                  </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {guides.map(renderGuideCard)}
         </View>
       </ScrollView>
 
@@ -452,68 +446,63 @@ const styles = StyleSheet.create({
   },
   guideCard: {
     backgroundColor: '#1E293B',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#2D3748',
+  },
+  guideHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
   },
   guideIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2D3748',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-  },
-  guideContent: {
-    gap: 12,
   },
   guideTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 8,
   },
   guideDescription: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#94A3B8',
-  },
-  subsectionsList: {
-    marginTop: 8,
-    gap: 12,
-  },
-  subsection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#3B82F6',
-    marginTop: 6,
-    marginRight: 12,
-  },
-  subsectionContent: {
-    flex: 1,
+    marginBottom: 16,
   },
   subsectionTitle: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#fff',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   subsectionDescription: {
     fontSize: 14,
     color: '#94A3B8',
+    marginBottom: 12,
   },
   readMoreButton: {
-    flexDirection: 'row',
+    backgroundColor: '#7C3AED',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
     gap: 8,
   },
   readMoreText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#3B82F6',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   modalContainer: {
     flex: 1,
@@ -578,5 +567,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flex: 1,
     lineHeight: 20,
+  },
+  bullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#7C3AED',
+    marginTop: 8,
+    marginRight: 12,
   },
 });

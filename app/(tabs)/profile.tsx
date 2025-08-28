@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useAuth } from '../../src/contexts/auth';
 import { useSubscription } from '../../src/contexts/subscription';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 export default function Profile() {
   const { signOut, user } = useAuth();
@@ -103,6 +104,20 @@ export default function Profile() {
     );
   };
 
+  const handleSupportPress = async () => {
+    const supportUrl = 'https://sberkeakdeniz.github.io/PodcastFast-mobile/support';
+    try {
+      const canOpen = await Linking.canOpenURL(supportUrl);
+      if (canOpen) {
+        await Linking.openURL(supportUrl);
+      } else {
+        Alert.alert('Error', 'Unable to open support page');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong while opening support page');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -123,7 +138,10 @@ export default function Profile() {
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleSupportPress}
+          >
             <Ionicons name="help-circle-outline" size={24} color="#fff" />
             <Text style={styles.menuItemText}>Help & Support</Text>
             <Ionicons name="chevron-forward" size={24} color="#666" />
@@ -141,6 +159,75 @@ export default function Profile() {
           <TouchableOpacity style={styles.menuItem} onPress={handleSignOut}>
             <Ionicons name="log-out-outline" size={24} color="#EF4444" />
             <Text style={[styles.menuItemText, { color: '#EF4444' }]}>Sign Out</Text>
+            <Ionicons name="chevron-forward" size={24} color="#666" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => {
+              Alert.alert(
+                'Delete Account',
+                'Are you sure you want to delete your account? This action cannot be undone.',
+                [
+                  {
+                    text: 'Cancel',
+                    style: 'cancel',
+                  },
+                  {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                      // First, prompt for password to re-authenticate
+                      Alert.prompt(
+                        'Confirm Password',
+                        'Please enter your password to confirm account deletion',
+                        [
+                          {
+                            text: 'Cancel',
+                            style: 'cancel'
+                          },
+                          {
+                            text: 'Confirm',
+                            style: 'destructive',
+                            onPress: async (password) => {
+                              if (!password) {
+                                Alert.alert('Error', 'Password is required');
+                                return;
+                              }
+
+                              try {
+                                // Re-authenticate user
+                                const credential = auth.EmailAuthProvider.credential(
+                                  auth().currentUser?.email || '',
+                                  password
+                                );
+                                await auth().currentUser?.reauthenticateWithCredential(credential);
+
+                                // After re-authentication, proceed with deletion
+                                await firestore().collection('users').doc(user?.uid).delete();
+                                await auth().currentUser?.delete();
+                                router.replace('/(auth)/onboarding');
+                              } catch (error: any) {
+                                if (error.code === 'auth/wrong-password') {
+                                  Alert.alert('Error', 'Incorrect password');
+                                } else {
+                                  Alert.alert('Error', error.message);
+                                }
+                              }
+                            }
+                          }
+                        ],
+                        'secure-text'
+                      );
+                    },
+                  },
+                ],
+                { cancelable: true }
+              );
+            }}
+          >
+            <Ionicons name="trash-outline" size={24} color="#EF4444" />
+            <Text style={[styles.menuItemText, { color: '#EF4444' }]}>Delete Account</Text>
             <Ionicons name="chevron-forward" size={24} color="#666" />
           </TouchableOpacity>
         </View>

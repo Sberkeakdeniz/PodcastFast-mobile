@@ -13,19 +13,10 @@ export interface PodcastContent {
 }
 
 class OpenAIService {
-    private openai: OpenAI;
+    private openai: OpenAI | null = null;
     private systemMessage: string;
 
     constructor() {
-        const apiKey = Constants.expoConfig?.extra?.openaiApiKey;
-        if (!apiKey) {
-            throw new Error('OpenAI API key is not configured in environment variables');
-        }
-
-        this.openai = new OpenAI({
-            apiKey
-        });
-
         this.systemMessage = `You are a podcast content advisor. You must respond ONLY with a JSON object in exactly this format, no additional text or explanation:
 {
     "popularTopics": [
@@ -46,12 +37,20 @@ class OpenAIService {
         // 1-2 tips for advertising, how to make the podcast more engaging
     ]
 }
-
+        
 Ensure the response is valid JSON and includes all required fields. Do not include any markdown formatting or additional text outside the JSON structure.`;
     }
 
     async generateContent(prompt: string): Promise<PodcastContent> {
         try {
+            // Lazy initialize OpenAI client and read API key with fallback
+            if (!this.openai) {
+                const apiKey = Constants.expoConfig?.extra?.openaiApiKey ?? (process.env.EXPO_PUBLIC_OPENAI_API_KEY as string | undefined);
+                if (!apiKey) {
+                    throw new Error('OpenAI API key is not configured');
+                }
+                this.openai = new OpenAI({ apiKey });
+            }
             const completion = await this.openai.chat.completions.create({
                 model: "gpt-4",
                 messages: [

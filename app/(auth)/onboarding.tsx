@@ -9,10 +9,8 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import Superwall from "@superwall/react-native-superwall";
 import Purchases from 'react-native-purchases';
-// Initialize Google Sign-In
-GoogleSignin.configure({
-  webClientId: '702703998338-nc8vdv8kk8b14hf1lsit846kg6lo2guh.apps.googleusercontent.com', // Add your web client ID here
-});
+import { appleAuth } from '@invertase/react-native-apple-authentication';
+// Google Sign-In is configured once at app startup in app/_layout.tsx
 
 type Step = 'welcome' | 'email' | 'password' | 'experience' | 'podcastType' | 'birthdate' | 'gender';
 
@@ -116,8 +114,9 @@ export default function Onboarding() {
           gender: '',
         });
 
-        // For new users, continue with onboarding
+        // For new users, skip password and go directly to experience step
         setEmail(user.email || '');
+        setPassword('oauth-login'); // Set a dummy password since we don't need it
         setCurrentStep('experience');
       } else {
         // Existing user, check subscription before showing paywall
@@ -147,8 +146,80 @@ export default function Onboarding() {
   };
 
   const handleAppleSignIn = async () => {
-    // Implement Apple sign in
-    Alert.alert('Coming Soon', 'Apple sign in will be available soon.');
+    try {
+      setIsLoading(true);
+      // Start the sign-in request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      // Handle user cancellation
+      if (!appleAuthRequestResponse.identityToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Create a Firebase credential from the token
+      const { identityToken, nonce } = appleAuthRequestResponse;
+      const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+
+      // Sign in to Firebase with the Apple credential
+      const userCredential = await auth().signInWithCredential(appleCredential);
+      const user = userCredential.user;
+
+      // Check if this is a new user
+      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      
+      if (!userDoc.exists) {
+        // If new user, set initial data
+        const userEmail = user.email || '';
+        const displayName = appleAuthRequestResponse.fullName?.givenName || userEmail.split('@')[0];
+        
+        await firestore().collection('users').doc(user.uid).set({
+          email: userEmail,
+          displayName: displayName,
+          photoURL: user.photoURL,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+          // Set default values for required fields
+          experience: '',
+          podcastType: '',
+          birthdate: null,
+          gender: '',
+        });
+
+        // For new users, skip password and go directly to experience step
+        setEmail(userEmail);
+        setPassword('oauth-login'); // Set a dummy password since we don't need it
+        setCurrentStep('experience');
+      } else {
+        // Existing user, check subscription before showing paywall
+        const customerInfo = await Purchases.getCustomerInfo();
+        const hasActiveSubscription = customerInfo.activeSubscriptions.length > 0 || 
+                                    Object.keys(customerInfo.entitlements.active).length > 0;
+        
+        if (hasActiveSubscription) {
+          // If user has active subscription, go directly to main app
+          router.push('/(tabs)');
+        } else {
+          // If no active subscription, show paywall
+          await Superwall.shared.register("onboarding_complete");
+          router.push('/(tabs)');
+        }
+      }
+    } catch (error: any) {
+      console.error(error);
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        Alert.alert('Error', 'An account already exists with the same email address.');
+      } else if (error.code !== 'auth/cancelled-popup-request' && 
+                 error.code !== 'auth/popup-closed-by-user' &&
+                 !error.message?.includes('cancelled')) {
+        Alert.alert('Error', 'Something went wrong with Apple Sign-In. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNext = () => {
