@@ -1,14 +1,46 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function ForgotPassword() {
+  const { sendPasswordResetEmail, loading } = useAuth();
   const [email, setEmail] = useState('');
+  const [isEmailSent, setIsEmailSent] = useState(false);
 
-  const handleResetPassword = () => {
-    // Implement password reset logic here
-    Alert.alert('Coming Soon', 'Password reset functionality will be available soon.');
+  const handleResetPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email address.');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(email.trim());
+      setIsEmailSent(true);
+      Alert.alert(
+        'Reset Link Sent',
+        'We\'ve sent a password reset link to your email address. Please check your inbox and follow the instructions.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back()
+          }
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to send reset email. Please try again.'
+      );
+    }
   };
 
   return (
@@ -32,12 +64,30 @@ export default function ForgotPassword() {
         />
         
         <TouchableOpacity 
-          style={[styles.resetButton, !email && styles.resetButtonDisabled]}
+          style={[
+            styles.resetButton, 
+            (!email || loading || isEmailSent) && styles.resetButtonDisabled
+          ]}
           onPress={handleResetPassword}
-          disabled={!email}
+          disabled={!email || loading || isEmailSent}
         >
-          <Text style={styles.resetButtonText}>Send Reset Link</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.resetButtonText}>
+              {isEmailSent ? 'Reset Link Sent' : 'Send Reset Link'}
+            </Text>
+          )}
         </TouchableOpacity>
+
+        {isEmailSent && (
+          <View style={styles.successContainer}>
+            <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+            <Text style={styles.successText}>
+              Check your email for reset instructions
+            </Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -89,5 +139,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  successContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#064E3B',
+    borderRadius: 8,
+    gap: 8,
+  },
+  successText: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
